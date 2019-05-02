@@ -6,6 +6,7 @@ export declare class AdvancedVideoView extends AdvancedVideoViewBase {
     _file: NSURL;
     private session;
     thumbnails: string[];
+    private orientationMap;
     _fileName: string;
     folder: any;
     private requestStoragePermission();
@@ -15,7 +16,6 @@ export declare class AdvancedVideoView extends AdvancedVideoViewBase {
     onLoaded(): void;
     onUnloaded(): void;
     readonly duration: number;
-    protected orientationMap: Map<UIDeviceOrientation, AVCaptureVideoOrientation>;
     private openCamera();
     startRecording(): void;
     stopRecording(): void;

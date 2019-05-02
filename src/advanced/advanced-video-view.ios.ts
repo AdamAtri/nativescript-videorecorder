@@ -65,6 +65,7 @@ export class AdvancedVideoView extends AdvancedVideoViewBase {
     _file: NSURL;
     private session: AVCaptureSession;
     public thumbnails: string[];
+    private orientationMap: Map<UIDeviceOrientation, AVCaptureVideoOrientation>;
     _fileName: string;
     folder;
 
@@ -124,16 +125,18 @@ export class AdvancedVideoView extends AdvancedVideoViewBase {
         return save;
     }
 
-    protected orientationMap: Map<UIDeviceOrientation, AVCaptureVideoOrientation> = new Map([
-        [UIDeviceOrientation.LandscapeLeft, AVCaptureVideoOrientation.LandscapeLeft]
-        [UIDeviceOrientation.LandscapeRight, AVCaptureVideoOrientation.LandscapeRight]
-        [UIDeviceOrientation.Portrait, AVCaptureVideoOrientation.Portrait]
-        [UIDeviceOrientation.PortraitUpsideDown, AVCaptureVideoOrientation.PortraitUpsideDown]
-    ]);
+    
 
     private openCamera(): void {
+        if (! this.orientationMap) {
+            this.orientationMap = new Map();
+            this.orientationMap.set(UIDeviceOrientation.LandscapeLeft, AVCaptureVideoOrientation.LandscapeLeft);
+            this.orientationMap.set(UIDeviceOrientation.LandscapeRight, AVCaptureVideoOrientation.LandscapeRight);
+            this.orientationMap.set(UIDeviceOrientation.Portrait, AVCaptureVideoOrientation.Portrait);
+            this.orientationMap.set(UIDeviceOrientation.PortraitUpsideDown, AVCaptureVideoOrientation.PortraitUpsideDown);
+        }
+            
         try {
-
             this.session = new AVCaptureSession();
             let devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo);
             let device: AVCaptureDevice;
@@ -166,13 +169,16 @@ export class AdvancedVideoView extends AdvancedVideoViewBase {
                 this._output.setOutputSettingsForConnection(<any>codec, connection);
             }
             const updateOrientation = () => {
+                console.log('orientation update');
                 if (connection && connection.supportsVideoOrientation) {
                     const device:UIDevice = utils.ios.getter(UIDevice, UIDevice.currentDevice);
-                    connection.videoOrientation = this.orientationMap.get(device.orientation);
+                    const newOrientation:AVCaptureVideoOrientation = this.orientationMap.has(device.orientation) ? 
+                        this.orientationMap.get(device.orientation) : connection.videoOrientation;
+                    connection.videoOrientation = newOrientation;
                 }
             };
             app.on(app.orientationChangedEvent, updateOrientation);
-            updateOrientation();
+            //updateOrientation();
             let format = '.mp4'; // options && options.format === 'default' ? '.mov' : '.' + options.format;
             this._fileName = `VID_${+new Date()}${format}`;
             this.folder = fs.knownFolders.temp().getFolder(Date.now().toString());
