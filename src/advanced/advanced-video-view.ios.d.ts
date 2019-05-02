@@ -15,6 +15,7 @@ export declare class AdvancedVideoView extends AdvancedVideoViewBase {
     onLoaded(): void;
     onUnloaded(): void;
     readonly duration: number;
+    protected orientationMap: Map<UIDeviceOrientation, AVCaptureVideoOrientation>;
     private openCamera();
     startRecording(): void;
     stopRecording(): void;

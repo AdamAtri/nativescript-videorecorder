@@ -3,6 +3,8 @@ import { layout } from 'tns-core-modules/ui/core/view';
 import '../async-await';
 import { AdvancedVideoViewBase, CameraPosition, Quality, saveToGalleryProperty } from './advanced-video-view.common';
 import { fromObject } from 'tns-core-modules/data/observable';
+import * as app from 'tns-core-modules/application/application';
+import * as utils from 'tns-core-modules/utils/utils';
 
 @ObjCClass(AVCaptureFileOutputRecordingDelegate)
 class AVCaptureFileOutputRecordingDelegateImpl extends NSObject
@@ -122,6 +124,13 @@ export class AdvancedVideoView extends AdvancedVideoViewBase {
         return save;
     }
 
+    protected orientationMap: Map<UIDeviceOrientation, AVCaptureVideoOrientation> = new Map([
+        [UIDeviceOrientation.LandscapeLeft, AVCaptureVideoOrientation.LandscapeLeft]
+        [UIDeviceOrientation.LandscapeRight, AVCaptureVideoOrientation.LandscapeRight]
+        [UIDeviceOrientation.Portrait, AVCaptureVideoOrientation.Portrait]
+        [UIDeviceOrientation.PortraitUpsideDown, AVCaptureVideoOrientation.PortraitUpsideDown]
+    ]);
+
     private openCamera(): void {
         try {
 
@@ -156,6 +165,14 @@ export class AdvancedVideoView extends AdvancedVideoViewBase {
                 codec[AVVideoCodecKey] = AVVideoCodecTypeH264;
                 this._output.setOutputSettingsForConnection(<any>codec, connection);
             }
+            const updateOrientation = () => {
+                if (connection && connection.supportsVideoOrientation) {
+                    const device:UIDevice = utils.ios.getter(UIDevice, UIDevice.currentDevice);
+                    connection.videoOrientation = this.orientationMap.get(device.orientation);
+                }
+            };
+            app.on(app.orientationChangedEvent, updateOrientation);
+            updateOrientation();
             let format = '.mp4'; // options && options.format === 'default' ? '.mov' : '.' + options.format;
             this._fileName = `VID_${+new Date()}${format}`;
             this.folder = fs.knownFolders.temp().getFolder(Date.now().toString());
